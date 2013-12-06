@@ -7,7 +7,7 @@ module.exports = function(opts) {
             max: 10, 
             idleTimeoutMillis: 1, 
             reapIntervalMillis: 1,
-            port: 6336
+            port: 6337
         }
     }
 
