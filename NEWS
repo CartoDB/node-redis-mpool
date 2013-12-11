@@ -1,3 +1,7 @@
+0.0.3 -- 2013-12-DD
+
+ - Unwatch variables between connections (#1)
+
 0.0.2 -- 2013-12-06
 
 Fix dependencies (redis is not just for test...)

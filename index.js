@@ -45,6 +45,7 @@ var RedisPool = function(opts){
   // - `database` {String} redis database name
   // - `resource` {Object} resource object to release
   me.release = function(database, resource) {
+      resource.UNWATCH();
       this.pools[database] && this.pools[database].release(resource);
   };
     
