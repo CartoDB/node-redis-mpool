@@ -18,6 +18,7 @@ var RedisPool = function(opts){
     max: 50, 
     idleTimeoutMillis: 10000, 
     reapIntervalMillis: 1000, 
+    unwatchOnRelease: true,
     log: false
   };    
   var options = _.defaults(opts, defaults)
@@ -32,12 +33,11 @@ var RedisPool = function(opts){
   // - `callback` {Function} callback to call once acquired. Takes the form
   //   `callback(err, resource)`  
   me.acquire = function(database, callback) {
-      if (!this.pools[database]) {
-        this.pools[database] = this.makePool(database);            
+      var pool = this.pools[database];
+      if (!pool) {
+        pool = this.pools[database] = this.makePool(database);            
       }
-      this.pools[database].acquire(function(err,resource) {
-        callback(err, resource);
-      });
+      pool.acquire(callback);
   };
   
   // Release resource.
@@ -45,8 +45,9 @@ var RedisPool = function(opts){
   // - `database` {String} redis database name
   // - `resource` {Object} resource object to release
   me.release = function(database, resource) {
-      resource.UNWATCH();
-      this.pools[database] && this.pools[database].release(resource);
+      if ( options.unwatchOnRelease ) resource.UNWATCH();
+      var pool = this.pools[database];
+      if ( pool ) pool.release(resource);
   };
     
   // Factory for pool objects.
