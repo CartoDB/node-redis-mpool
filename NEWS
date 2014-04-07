@@ -1,5 +1,7 @@
 0.0.5 -- 2014-MM-DD
 
+ - Switch to 3-clause BSD license (#3)
+
 0.0.4 -- 2014-02-24
 
  - Add parameter to skip unwatch on release (#2)
