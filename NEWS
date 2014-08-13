@@ -1,6 +1,13 @@
-0.0.5 -- 2014-MM-DD
+0.0.5 -- 2014-08-13
 
  - Switch to 3-clause BSD license (#3)
+ - Upgraded dependencies
+ - Implements validate method to take non connected clients from the pool.
+ - Destroy calls to redis.end method to ensure socket is disconnected.
+ - Client is returned on ready event after selecting the DB instead of using
+   connect event.
+ - New configuration allows to log acquire slow operations when it takes
+   longer than a threshold to retrieve a client from the pool.
 
 0.0.4 -- 2014-02-24
 
