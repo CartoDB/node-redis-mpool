@@ -9,7 +9,7 @@ module.exports = function(opts) {
             reapIntervalMillis: 1,
             port: 6337
         }
-    }
+    };
 
     _.extend(config,  opts || {});
 

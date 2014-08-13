@@ -17,7 +17,7 @@ suite('redis_pool', function() {
     });
     
     test('RedisPool can create new redis_pool objects with default settings', function(done){
-      var redis_pool = new RedisPool();
+      new RedisPool();
       done();
     });
     
@@ -106,6 +106,45 @@ suite('redis_pool', function() {
           done(err);
         }
       );
+    });
+
+    test('log is called if elapsed time is above configured one', function(done) {
+        var logWasCalled = false,
+            elapsedThreshold = 25,
+            enabledSlowPoolConfig = {
+                slowPool: {
+                    log: true,
+                    elapsedThreshold: elapsedThreshold
+                }
+            };
+
+        var times = 0;
+        var dateNowFunc = Date.now;
+        Date.now = function () {
+            return times++ * elapsedThreshold * 2;
+        };
+        consoleLogFunc = console.log;
+        console.log = function(what) {
+            var whatObj;
+            try {
+                whatObj = JSON.parse(what);
+            } catch (e) {
+                // pass
+            }
+            logWasCalled = whatObj && whatObj.action && whatObj.action === 'adquire';
+            consoleLogFunc.apply(console, arguments);
+        }
+
+        var redisPool = new RedisPool(_.extend(test_opts, enabledSlowPoolConfig));
+        redisPool.acquire(0, function(err, client) {
+
+            console.log = consoleLogFunc;
+            Date.now = dateNowFunc;
+
+            redisPool.release(0, client);
+            assert.ok(logWasCalled);
+            done();
+        });
     });
 
 });
