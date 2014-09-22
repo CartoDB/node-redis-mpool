@@ -22,7 +22,7 @@ suite('redis_pool', function() {
     });
     
     test('RedisPool can create new redis_pool objects with specific settings', function(done){
-      var redis_pool = new RedisPool(_.extend({host:'127.0.0.1', port: '6379'}, test_opts));
+      new RedisPool(_.extend({host:'127.0.0.1', port: '6379'}, test_opts));
       done();
     });
     
@@ -123,7 +123,7 @@ suite('redis_pool', function() {
         Date.now = function () {
             return times++ * elapsedThreshold * 2;
         };
-        consoleLogFunc = console.log;
+        var consoleLogFunc = console.log;
         console.log = function(what) {
             var whatObj;
             try {
@@ -131,9 +131,9 @@ suite('redis_pool', function() {
             } catch (e) {
                 // pass
             }
-            logWasCalled = whatObj && whatObj.action && whatObj.action === 'adquire';
+            logWasCalled = whatObj && whatObj.action && whatObj.action === 'acquire';
             consoleLogFunc.apply(console, arguments);
-        }
+        };
 
         var redisPool = new RedisPool(_.extend(test_opts, enabledSlowPoolConfig));
         redisPool.acquire(0, function(err, client) {
@@ -146,5 +146,22 @@ suite('redis_pool', function() {
             done();
         });
     });
+
+    test('emits `status` event after pool has been used', function(done) {
+        var database = 0;
+        var redisPool = new RedisPool(_.extend(test_opts, {emitter: {statusInterval: 0}}));
+        redisPool.acquire(database, function(err, client) {
+            redisPool.release(database, client);
+        });
+        var doneCalled = false;
+        redisPool.on('status', function(status) {
+            assert.equal(status.db, database);
+            if (!doneCalled) {
+                doneCalled = true;
+                done();
+            }
+        });
+    });
+
 
 });
