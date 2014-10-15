@@ -1,8 +1,8 @@
-# 0.2.0 (2014-mm-dd)
+# 0.2.0 (2014-10-15)
 
  - RedisPool now emits events
     * Starts emitting `status` event with information about each pool created
-      every `opts.reportInterval` milliseconds.
+      every `opts.emitter.statusInterval` milliseconds.
  - Limits public API to acquire/release methods.
 
 # 0.1.0 (2014-08-13)
