@@ -29,6 +29,7 @@ function RedisPool(opts) {
         max: 50,
         idleTimeoutMillis: 10000,
         reapIntervalMillis: 1000,
+        returnToHead: false,
         unwatchOnRelease: true,
         name: 'default',
         log: false,
@@ -155,6 +156,7 @@ function makePool(options, database) {
         max: options.max,
         idleTimeoutMillis: options.idleTimeoutMillis,
         reapIntervalMillis: options.reapIntervalMillis,
+        returnToHead: options.returnToHead,
         log: options.log
     });
 }
