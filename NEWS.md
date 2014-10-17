@@ -1,3 +1,5 @@
+# 0.3.1 (2014-mm-dd)
+
 # 0.3.0 (2014-10-17)
 
  - Adds returnToHead configuration option
