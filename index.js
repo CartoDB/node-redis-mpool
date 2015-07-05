@@ -29,6 +29,7 @@ function RedisPool(opts) {
         max: 50,
         idleTimeoutMillis: 10000,
         reapIntervalMillis: 1000,
+        noReadyCheck: false,
         returnToHead: false,
         unwatchOnRelease: true,
         name: 'default',
@@ -123,7 +124,9 @@ function makePool(options, database) {
 
             var callbackCalled = false;
 
-            var client = redis.createClient(options.port, options.host);
+            var client = redis.createClient(options.port, options.host, {
+                no_ready_check: options.noReadyCheck
+            });
 
             client.on('error', function (err) {
                 log(options, {db: database, action: 'error', err: err.message});

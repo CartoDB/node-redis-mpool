@@ -1,4 +1,6 @@
-# 0.3.1 (2014-mm-dd)
+# 0.4.0 (2014-mm-dd)
+
+ - Adds noReadyCheck configuration option
 
 # 0.3.0 (2014-10-17)
 
