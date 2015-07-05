@@ -1,6 +1,6 @@
 {
     "name": "redis-mpool",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "main": "./index.js",
     "description": "Provides db pools for redis",
     "url": "https://github.com/cartodb/node-redis-mpool",
