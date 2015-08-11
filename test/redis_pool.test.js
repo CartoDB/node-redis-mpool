@@ -149,7 +149,7 @@ suite('redis_pool', function() {
 
     test('emits `status` event after pool has been used', function(done) {
         var database = 0;
-        var redisPool = new RedisPool(_.extend(test_opts, {emitter: {statusInterval: 0}}));
+        var redisPool = new RedisPool(_.extend(test_opts, {emitter: {statusInterval: 5}}));
         redisPool.acquire(database, function(err, client) {
             redisPool.release(database, client);
         });
