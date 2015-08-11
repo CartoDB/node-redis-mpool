@@ -9,3 +9,6 @@ distclean clean:
 check:
 	npm test
 
+test: check
+
+.PHONY: test
