@@ -1,5 +1,10 @@
-A database specific redis pooling lib used by CartoDB node apps.
+redis-mpool
+-----------
 
-See http://cartodb.com
+Provides pools for Redis databases.
 
-[![Build Status](https://travis-ci.org/CartoDB/node-redis-mpool.png)](http://travis-ci.org/CartoDB/node-redis-mpool)
+[![Build Status](https://travis-ci.org/CartoDB/node-redis-mpool.png?branch=master)](http://travis-ci.org/CartoDB/node-redis-mpool)
+
+## Contributing
+
+See [CONTRIBUTING.md].
