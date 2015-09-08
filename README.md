@@ -7,4 +7,4 @@ Provides pools for Redis databases.
 
 ## Contributing
 
-See [CONTRIBUTING.md].
+See [CONTRIBUTING.md](CONTRIBUTING.md).
