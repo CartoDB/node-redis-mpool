@@ -1,5 +1,6 @@
-# 0.4.1 (2015-mm-dd)
+# 0.4.1 (2016-mm-dd)
 
+ - Upgrades hiredis to 0.5.0: allows to use it with Node.js v4 and v6.
 
 # 0.4.0 (2015-07-05)
 
