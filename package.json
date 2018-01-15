@@ -1,35 +1,39 @@
 {
-    "name": "redis-mpool",
-    "version": "0.4.2",
-    "main": "./index.js",
-    "description": "Provides db pools for redis",
-    "url": "https://github.com/cartodb/node-redis-mpool",
-    "licenses": [{
-        "type": "BSD",
-        "url": "https://github.com/cartodb/node-redis-mpool/blob/master/LICENCE"
-    }],
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/cartodb/node-redis-mpool.git"
-    },
-    "author": "Vizzuality <contact@vizzuality.com> (http://vizzuality.com)",
-    "contributors": [
-      "Simon Tokumine <simon@vizzuality.com>",
-      "Javi Santana <jsantana@vizzuality.com>",
-      "Sandro Santilli <strk@vizzuality.com>"
-    ],
-    "dependencies": {
-        "underscore": "~1.6.0",
-        "generic-pool": "~2.1.1",
-        "redis": "~0.12.1",
-        "hiredis": "~0.5.0"
-    },
-    "devDependencies": {
-        "mocha": "~1.15.1",
-        "step": "~0.0.5"
-    },
-    "scripts": {
-        "test": "./run_tests.sh test/*"
-    },
-    "engine": { "node": ">= 0.6 < 0.9" }
+  "name": "redis-mpool",
+  "version": "0.4.2",
+  "main": "./index.js",
+  "description": "Provides db pools for redis",
+  "url": "https://github.com/cartodb/node-redis-mpool",
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://github.com/cartodb/node-redis-mpool/blob/master/LICENCE"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cartodb/node-redis-mpool.git"
+  },
+  "author": "Vizzuality <contact@vizzuality.com> (http://vizzuality.com)",
+  "contributors": [
+    "Simon Tokumine <simon@vizzuality.com>",
+    "Javi Santana <jsantana@vizzuality.com>",
+    "Sandro Santilli <strk@vizzuality.com>"
+  ],
+  "dependencies": {
+    "generic-pool": "~2.1.1",
+    "hiredis": "~0.5.0",
+    "redis": "^2.8.0",
+    "underscore": "~1.6.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.15.1",
+    "step": "~0.0.5"
+  },
+  "scripts": {
+    "test": "./run_tests.sh test/*"
+  },
+  "engine": {
+    "node": ">= 0.6 < 0.9"
+  }
 }

@@ -4,7 +4,7 @@ var redis = require('redis')
     , EventEmitter = require('events').EventEmitter
     , util = require('util')
     ;
-
+    
 
 /**
  * Create a new multi database Redis pool.
@@ -134,7 +134,7 @@ function makePool(options, database) {
                     callbackCalled = true;
                     callback(err, client);
                 }
-                client.end();
+                client.end(true);
             });
 
             client.on('ready', function () {
@@ -144,12 +144,12 @@ function makePool(options, database) {
                         callback(err, client);
                     }
                 });
-            })
+            });
         },
 
         destroy: function(client) {
             client.quit();
-            client.end();
+            client.end(true);
         },
 
         validate: function(client) {
