@@ -5,8 +5,6 @@ var redis = require('redis')
     , util = require('util')
     ;
     
-redis.add_command('CL.THROTTLE');
-
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
