@@ -4,7 +4,10 @@ var redis = require('redis')
     , EventEmitter = require('events').EventEmitter
     , util = require('util')
     ;
-    
+
+// add custom commands
+redis.add_command('CL.THROTTLE');
+
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
