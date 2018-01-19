@@ -49,7 +49,7 @@ function RedisPool(opts) {
 
     // add custom Redis commands
     if (this.options.commands && this.options.commands.length) {
-        this.options.commands.forEach(newCommand => {
+        this.options.commands.forEach(function(newCommand) {
             redis.add_command(newCommand);
         });
     }
