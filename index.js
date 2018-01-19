@@ -5,9 +5,6 @@ var redis = require('redis')
     , util = require('util')
     ;
 
-// add custom commands
-redis.add_command('CL.THROTTLE');
-
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
@@ -42,12 +39,20 @@ function RedisPool(opts) {
         },
         emitter: {
             statusInterval: 60000
-        }
+        },
+        commands: []
     };
 
     this.options = _.defaults(opts, defaults);
     this.pools = {};
     this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
+
+    // add custom Redis commands
+    if (this.options.commands && this.options.commands.length) {
+        this.options.commands.forEach(newCommand => {
+            redis.add_command(newCommand);
+        });
+    }
 
     var self = this;
     setInterval(function() {
