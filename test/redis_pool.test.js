@@ -25,7 +25,38 @@ suite('redis_pool', function() {
       new RedisPool(_.extend({host:'127.0.0.1', port: '6379'}, test_opts));
       done();
     });
-    
+
+    test('Not added command should not works', function(done){
+      redis_pool.acquire(0, function(err, client){
+        if ( err ) { done(err); return; }
+        
+        assert.strictEqual(client['fakeCommand'], undefined);
+        redis_pool.release(0, client); // needed to exit tests
+
+        done();
+      });
+    });
+
+    test('Adding new command should works (but throws because the command not exists in Redis)', function(done){
+      var commandsRedisPool = new RedisPool(_.extend(
+        test_opts,
+        {
+          commands: ['fakeCommand']          
+        }
+      ));
+
+      commandsRedisPool.acquire(0, function(err, client){
+        if ( err ) { done(err); return; }
+
+        client['fakeCommand']("key", function(err,data){
+          assert.equal(err.name, "ReplyError");
+          assert.equal(err.message, "ERR unknown command 'fakeCommand'")
+          commandsRedisPool.release(0, client); // needed to exit tests
+          
+          done();
+        })
+      });
+    });
     
     test('pool object has an acquire function', function(done){
       var found=false;
