@@ -5,6 +5,8 @@ var redis = require('redis')
     , util = require('util')
     ;
 
+var FLUSH_CONNECTION = true;
+
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
@@ -141,7 +143,7 @@ function makePool(options, database) {
                     callbackCalled = true;
                     callback(err, client);
                 }
-                client.end(true);
+                client.end(FLUSH_CONNECTION);
             });
 
             client.on('ready', function () {
@@ -156,7 +158,7 @@ function makePool(options, database) {
 
         destroy: function(client) {
             client.quit();
-            client.end(true);
+            client.end(FLUSH_CONNECTION);
         },
 
         validate: function(client) {
