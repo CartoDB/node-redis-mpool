@@ -5,6 +5,7 @@ var redis = require('redis')
     , util = require('util')
     ;
 
+var FLUSH_CONNECTION = true;
 
 /**
  * Create a new multi database Redis pool.
@@ -40,12 +41,20 @@ function RedisPool(opts) {
         },
         emitter: {
             statusInterval: 60000
-        }
+        },
+        commands: []
     };
 
     this.options = _.defaults(opts, defaults);
     this.pools = {};
     this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
+
+    // add custom Redis commands
+    if (this.options.commands && this.options.commands.length) {
+        this.options.commands.forEach(function(newCommand) {
+            redis.add_command(newCommand);
+        });
+    }
 
     var self = this;
     setInterval(function() {
@@ -134,7 +143,7 @@ function makePool(options, database) {
                     callbackCalled = true;
                     callback(err, client);
                 }
-                client.end();
+                client.end(FLUSH_CONNECTION);
             });
 
             client.on('ready', function () {
@@ -144,12 +153,12 @@ function makePool(options, database) {
                         callback(err, client);
                     }
                 });
-            })
+            });
         },
 
         destroy: function(client) {
             client.quit();
-            client.end();
+            client.end(FLUSH_CONNECTION);
         },
 
         validate: function(client) {
