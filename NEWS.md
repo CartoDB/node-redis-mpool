@@ -1,4 +1,4 @@
-# 0.5.0 (2018-mm-dd)
+# 0.5.0 (2018-02-05)
 
  - Upgrades redis to 2.8.0
  - Support for Redis commands
