@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert')
   , Step = require('step')
   , _ = require('underscore')
@@ -8,19 +10,19 @@ suite('redis_pool', function() {
 
     // configure redis pool instance to use in tests
     var test_opts = require('./support/config').redis_pool;
-    
+
     var redis_pool = new RedisPool(test_opts);
 
     test('RedisPool object exists', function(done){
       assert.ok(RedisPool);
       done();
     });
-    
+
     test('RedisPool can create new redis_pool objects with default settings', function(done){
       new RedisPool();
       done();
     });
-    
+
     test('RedisPool can create new redis_pool objects with specific settings', function(done){
       new RedisPool(_.extend({host:'127.0.0.1', port: '6379'}, test_opts));
       done();
@@ -29,7 +31,7 @@ suite('redis_pool', function() {
     test('Not added command should not works', function(done){
       redis_pool.acquire(0, function(err, client){
         if ( err ) { done(err); return; }
-        
+
         assert.strictEqual(client['fakeCommand'], undefined);
         redis_pool.release(0, client); // needed to exit tests
 
@@ -41,7 +43,7 @@ suite('redis_pool', function() {
       var commandsRedisPool = new RedisPool(_.extend(
         test_opts,
         {
-          commands: ['fakeCommand']          
+          commands: ['fakeCommand']
         }
       ));
 
@@ -52,12 +54,12 @@ suite('redis_pool', function() {
           assert.equal(err.name, "ReplyError");
           assert.equal(err.message, "ERR unknown command 'fakeCommand'")
           commandsRedisPool.release(0, client); // needed to exit tests
-          
+
           done();
         })
       });
     });
-    
+
     test('pool object has an acquire function', function(done){
       var found=false;
       var functions = _.functions(redis_pool);
@@ -67,29 +69,29 @@ suite('redis_pool', function() {
       assert.ok(found);
       done();
     });
-    
+
     test('calling aquire returns a redis client object that can get/set', function(done){
       redis_pool.acquire(0, function(err, client){
         if ( err ) { done(err); return; }
         client.set("key","value");
-        client.get("key", function(err,data){      
-          assert.equal(data, "value");      
+        client.get("key", function(err,data){
+          assert.equal(data, "value");
           redis_pool.release(0, client); // needed to exit tests
           done();
         })
-      });    
+      });
     });
-    
+
     test('calling aquire on another DB returns a redis client object that can get/set', function(done){
       redis_pool.acquire(2, function(err, client){
         if ( err ) { done(err); return; }
         client.set("key","value");
-        client.get("key", function(err,data){      
-          assert.equal(data, "value");      
+        client.get("key", function(err,data){
+          assert.equal(data, "value");
           redis_pool.release(2, client); // needed to exit tests
           done();
         })
-      });      
+      });
     });
 
     // See https://github.com/CartoDB/node-redis-mpool/issues/1

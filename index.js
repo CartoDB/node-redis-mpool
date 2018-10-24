@@ -1,3 +1,5 @@
+'use strict';
+
 var redis = require('redis')
     , _ = require('underscore')
     , Pool = require('generic-pool').Pool
