@@ -1,5 +1,6 @@
 # 0.5.1 (2018-mm-dd)
 
+ - Make all modules to use strict mode semantics.
 
 # 0.5.0 (2018-02-05)
 
