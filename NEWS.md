@@ -1,5 +1,8 @@
-# 0.5.1 (2018-mm-dd)
+# 0.6.0 (2018-mm-dd)
 
+ - Make all modules to use strict mode semantics.
+ - Drop support for Node 0.10.x and 4.x
+ - Add support for Node 8 and 10
 
 # 0.5.0 (2018-02-05)
 
