@@ -1,3 +1,5 @@
+# 0.6.1 (2018-mm-dd)
+
 # 0.6.0 (2018-10-25)
 
  - Make all modules to use strict mode semantics.
