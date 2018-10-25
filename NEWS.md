@@ -1,4 +1,4 @@
-# 0.6.0 (2018-mm-dd)
+# 0.6.0 (2018-10-25)
 
  - Make all modules to use strict mode semantics.
  - Drop support for Node 0.10.x and 4.x
