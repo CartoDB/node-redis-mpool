@@ -1,6 +1,6 @@
 {
   "name": "redis-mpool",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "main": "./index.js",
   "description": "Provides db pools for redis",
   "url": "https://github.com/cartodb/node-redis-mpool",
@@ -18,7 +18,8 @@
   "contributors": [
     "Simon Tokumine <simon@vizzuality.com>",
     "Javi Santana <jsantana@vizzuality.com>",
-    "Sandro Santilli <strk@vizzuality.com>"
+    "Sandro Santilli <strk@vizzuality.com>",
+    "Daniel García Aubert <dgaubert@carto.com>"
   ],
   "dependencies": {
     "generic-pool": "~2.1.1",
