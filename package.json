@@ -27,11 +27,12 @@
     "underscore": "~1.6.0"
   },
   "devDependencies": {
-    "mocha": "~1.15.1",
+    "mocha": "^7.1.1",
     "step": "~0.0.5"
   },
   "scripts": {
-    "test": "./run_tests.sh test/*"
+    "test": "mocha --recursive test",
+    "test:dev": "mocha --recursive --watch test"
   },
   "engine": {
     "node": ">= 0.6"
