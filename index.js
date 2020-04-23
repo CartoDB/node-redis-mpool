@@ -6,6 +6,27 @@ var EventEmitter = require('events').EventEmitter;
 
 var FLUSH_CONNECTION = true;
 
+const DEFAULTS = {
+  host: '127.0.0.1',
+  port: '6379',
+  max: 50,
+  idleTimeoutMillis: 10000,
+  reapIntervalMillis: 1000,
+  noReadyCheck: false,
+  returnToHead: false,
+  unwatchOnRelease: true,
+  name: 'default',
+  log: false,
+  slowPool: {
+    log: false,
+    elapsedThreshold: 25
+  },
+  emitter: {
+    statusInterval: 60000
+  },
+  commands: []
+};
+
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
@@ -18,41 +39,19 @@ module.exports = class RedisPool extends EventEmitter {
   constructor (options = {}) {
     super();
 
-    const defaults = {
-      host: '127.0.0.1',
-      port: '6379',
-      max: 50,
-      idleTimeoutMillis: 10000,
-      reapIntervalMillis: 1000,
-      noReadyCheck: false,
-      returnToHead: false,
-      unwatchOnRelease: true,
-      name: 'default',
-      log: false,
-      slowPool: {
-        log: false,
-        elapsedThreshold: 25
-      },
-      emitter: {
-        statusInterval: 60000
-      },
-      commands: []
-    };
-
     this.pools = {};
-    this.options = Object.assign(defaults, options);
+    this.options = Object.assign({}, DEFAULTS, options);
     this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
 
     if (this.options.commands.length) {
       this._addCommands(this.options.commands)
     }
 
-    var self = this;
-    setInterval(function () {
-      Object.keys(self.pools).forEach(function (poolKey) {
-        var pool = self.pools[poolKey];
-        self.emit('status', {
-          name: self.options.name,
+    setInterval(() => {
+      Object.keys(this.pools).forEach(poolKey => {
+        var pool = this.pools[poolKey];
+        this.emit('status', {
+          name: this.options.name,
           db: poolKey,
           count: pool.getPoolSize(),
           unused: pool.availableObjectsCount(),
@@ -69,16 +68,16 @@ module.exports = class RedisPool extends EventEmitter {
    * @param {Function} callback Callback to call once acquired. Takes the form `callback(err, resource)`
    */
   acquire (database, callback) {
-    var self = this;
     var pool = this.pools[database];
     if (!pool) {
       pool = this.pools[database] = makePool(this.options, database);
     }
+
     var startTime = Date.now();
-    pool.acquire(function (err, client) {
+    pool.acquire((err, client) => {
       var elapsedTime = Date.now() - startTime;
-      if (elapsedTime > self.elapsedThreshold) {
-        log(self.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount() });
+      if (elapsedTime > this.elapsedThreshold) {
+        log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount() });
       }
       callback(err, client);
     });
