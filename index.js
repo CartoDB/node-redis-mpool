@@ -40,13 +40,9 @@ module.exports = class RedisPool extends EventEmitter {
 
     this.pools = {};
     this.options = Object.assign({}, DEFAULTS, options);
-    this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
 
-    if (this.options.commands.length) {
-      this._addCommands(this.options.commands)
-    }
-
-    this._emitStatus(this.options.emitter.statusInterval)
+    this._addCommands()
+    this._emitStatus()
   }
 
   /**
@@ -64,7 +60,7 @@ module.exports = class RedisPool extends EventEmitter {
     const startTime = Date.now();
     pool.acquire((err, client) => {
       const elapsedTime = Date.now() - startTime;
-      if (elapsedTime > this.elapsedThreshold) {
+      if (elapsedTime > this.options.slowPool.elapsedThreshold) {
         log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount() });
       }
       callback(err, client);
@@ -89,11 +85,13 @@ module.exports = class RedisPool extends EventEmitter {
     }
   }
 
-  _addCommands (commands = []) {
-    commands.forEach(newCommand => redis.add_command(newCommand));
+  _addCommands () {
+    if (this.options.commands.length) {
+      this.options.commands.forEach(newCommand => redis.add_command(newCommand));
+    }
   }
 
-  _emitStatus(statusInterval) {
+  _emitStatus() {
     setInterval(() => {
       for (const [poolKey, pool] of Object.entries(this.pools)) {
         this.emit('status', {
@@ -104,7 +102,7 @@ module.exports = class RedisPool extends EventEmitter {
           waiting: pool.waitingClientsCount()
         });
       }
-    }, statusInterval);
+    }, this.options.emitter.statusInterval);
   }
 };
 
