@@ -31,7 +31,7 @@ describe('RedisPool', function () {
   });
 
   it('RedisPool can create new RedisPool objects with specific settings', function (done) {
-    new RedisPool(_.extend({ host: '127.0.0.1', port: '6379' }, this.test_opts));
+    new RedisPool(Object.assign({ host: '127.0.0.1', port: '6379' }, this.test_opts));
     done();
   });
 
@@ -47,7 +47,7 @@ describe('RedisPool', function () {
   });
 
   it('Adding new command should works (but throws because the command not exists in Redis)', function (done) {
-    var commandsRedisPool = new RedisPool(_.extend(
+    var commandsRedisPool = new RedisPool(Object.assign(
       this.test_opts,
       {
         commands: ['fakeCommand']
@@ -67,14 +67,8 @@ describe('RedisPool', function () {
     });
   });
 
-  it('pool object has an acquire function', function (done) {
-    var found = false;
-    var functions = _.functions(redis_pool);
-    for (var i = 0; i < functions.length; ++i) {
-      if (functions[i] == 'acquire') { found = true; break; }
-    }
-    assert.ok(found);
-    done();
+  it('pool object has an acquire function', function () {
+    assert.ok(typeof redis_pool.acquire === 'function');
   });
 
   it('calling aquire returns a redis client object that can get/set', function (done) {
@@ -175,7 +169,7 @@ describe('RedisPool', function () {
       consoleLogFunc.apply(console, arguments);
     };
 
-    var redisPool = new RedisPool(_.extend(this.test_opts, enabledSlowPoolConfig));
+    var redisPool = new RedisPool(Object.assign(this.test_opts, enabledSlowPoolConfig));
     redisPool.acquire(0, function (err, client) {
 
       console.log = consoleLogFunc;
@@ -189,7 +183,7 @@ describe('RedisPool', function () {
 
   it('emits `status` event after pool has been used', function (done) {
     var database = 0;
-    var redisPool = new RedisPool(_.extend(this.test_opts, { emitter: { statusInterval: 5 } }));
+    var redisPool = new RedisPool(Object.assign(this.test_opts, { emitter: { statusInterval: 5 } }));
     redisPool.acquire(database, function (err, client) {
       redisPool.release(database, client);
     });
