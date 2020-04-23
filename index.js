@@ -1,8 +1,8 @@
 'use strict';
 
-const redis = require('redis');
-const Pool = require('generic-pool').Pool;
 const EventEmitter = require('events').EventEmitter;
+const redis = require('redis');
+const { createPool } = require('generic-pool');
 
 const FLUSH_CONNECTION = true;
 const DEFAULTS = {
@@ -15,7 +15,6 @@ const DEFAULTS = {
   returnToHead: false,
   unwatchOnRelease: true,
   name: 'default',
-  log: false,
   slowPool: {
     log: false,
     elapsedThreshold: 25
@@ -113,50 +112,71 @@ module.exports = class RedisPool extends EventEmitter {
  * @returns {Pool}
  */
 function makePool (options, database) {
-  return Pool({
-    name: options.name + ':' + database,
+  const factory = {
+    create () {
+      return new Promise((resolve, reject) => {
+        let settled = false;
 
-    create: function (callback) {
-      let callbackCalled = false;
+        const client = redis.createClient(options.port, options.host, {
+          no_ready_check: options.noReadyCheck
+        });
 
-      const client = redis.createClient(options.port, options.host, {
-        no_ready_check: options.noReadyCheck
-      });
+        client.on('error', function (err) {
+          log(options, { db: database, action: 'error', err: err.message });
 
-      client.on('error', function (err) {
-        log(options, { db: database, action: 'error', err: err.message });
-        if (!callbackCalled) {
-          callbackCalled = true;
-          callback(err, client);
-        }
-        client.end(FLUSH_CONNECTION);
-      });
+          if (!settled) {
+            settled = true;
+            client.end(FLUSH_CONNECTION);
 
-      client.on('ready', function () {
-        client.select(database, function (err/*, res */) {
-          if (!callbackCalled) {
-            callbackCalled = true;
-            callback(err, client);
+            if (err) {
+              return reject(err);
+            }
+            return resolve(client);
           }
         });
-      });
+
+        client.on('ready', function () {
+          client.select(database, err => {
+            if (!settled) {
+              settled = true;
+
+              if (err) {
+                return reject(err);
+              }
+              return resolve(client);
+            }
+          });
+        });
+      })
     },
 
-    destroy: function (client) {
-      client.quit();
-      client.end(FLUSH_CONNECTION);
+    destroy (client) {
+      return new Promise((resolve, reject) => {
+        client.quit(err => {
+          client.end(FLUSH_CONNECTION);
+          if (err) {
+            return reject(err);
+          }
+          return resolve();
+        });
+      })
     },
 
-    validate: function (client) {
-      return client && client.connected;
-    },
+    validate (client) {
+      return new Promise(resolve => {
+        return resolve(client && client.connected)
+      })
+    }
+  }
 
+  const config = {
     max: options.max,
     idleTimeoutMillis: options.idleTimeoutMillis,
     reapIntervalMillis: options.reapIntervalMillis,
-    returnToHead: options.returnToHead,
-    log: options.log
-  });
+    returnToHead: options.returnToHead
+  }
+
+  return createPool(factory, config);
 }
 
 function log (options, what) {
