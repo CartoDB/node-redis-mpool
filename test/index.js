@@ -27,7 +27,7 @@ describe('RedisPool', function () {
     assert.ok(redisPool)
   });
 
-  it('Adding new command should works (but throws because the command not exists in Redis)', async function () {
+  it('Adding new command should works (but throws because the command does not exists in Redis)', async function () {
     const options = Object.assign(
       TEST_OPTIONS,
       { commands: ['fakeCommand'] }
@@ -45,7 +45,7 @@ describe('RedisPool', function () {
     await redisPool.release(0, client); // needed to exit tests
   });
 
-  it('Not added command should not works', async function () {
+  it('Not added command should not work', async function () {
     const redisPool = new RedisPool(TEST_OPTIONS)
     const client = await redisPool.acquire(0)
     assert.strictEqual(client.fakeCommand, undefined);
@@ -96,7 +96,7 @@ describe('RedisPool', function () {
     await redisPool.release(0, client1);
     client1 = null;
 
-    client1 = await redisPool.acquire(0, this);
+    client1 = await redisPool.acquire(0);
 
     // We expect this to be not watching now..
     const tx1 = client1.MULTI();
@@ -149,19 +149,18 @@ describe('RedisPool', function () {
     assert.ok(logWasCalled);
   });
 
-  it('emits `status` event after pool has been used', function (done) {
-    var database = 0;
-    var redisPool = new RedisPool(Object.assign(TEST_OPTIONS, { emitter: { statusInterval: 5 } }));
-    redisPool.acquire(database, function (err, client) {
-      redisPool.release(database, client);
-    });
-    var doneCalled = false;
-    redisPool.on('status', function (status) {
-      assert.equal(status.db, database);
-      if (!doneCalled) {
-        doneCalled = true;
-        done();
-      }
-    });
+  it('emits `status` event after pool has been used', async function () {
+    const DATABASE = 0;
+    const redisPool = new RedisPool(Object.assign(TEST_OPTIONS, { emitter: { statusInterval: 5 } }));
+
+    const client = await redisPool.acquire(DATABASE)
+
+    return new Promise(resolve => {
+      redisPool.once('status', async status => {
+        assert.equal(status.db, DATABASE);
+        await redisPool.release(DATABASE, client);
+        resolve()
+      });
+    })
   });
 });
