@@ -1,4 +1,16 @@
+# 1.0.0 (2020-04-xx)
+
+ - Using promises
+ - ES2020 style
+ - removing hiredis and using node-redis
+ - removing makefile and use npm scripts
+ - removing underscore
+ - removing dot
+ - updating dependencies version
+ - adding eslint (standard)
+
 # 0.7.0 (2018-11-21)
+
  - Add package-lock.json
 
 # 0.6.0 (2018-10-25)
