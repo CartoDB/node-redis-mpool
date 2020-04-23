@@ -23,8 +23,7 @@
   ],
   "dependencies": {
     "generic-pool": "~2.1.1",
-    "redis": "^2.8.0",
-    "underscore": "~1.6.0"
+    "redis": "^2.8.0"
   },
   "devDependencies": {
     "mocha": "^7.1.1",
