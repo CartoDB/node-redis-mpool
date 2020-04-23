@@ -41,8 +41,8 @@ module.exports = class RedisPool extends EventEmitter {
     this.pools = {};
     this.options = Object.assign({}, DEFAULTS, options);
 
-    this._addCommands()
-    this._emitStatus()
+    this._addCommands();
+    this._emitStatus();
   }
 
   /**
@@ -70,8 +70,8 @@ module.exports = class RedisPool extends EventEmitter {
   /**
    * Release resource.
    *
-   * @param database {String|Number} redis database name
-   * @param resource {Object} resource object to release
+   * @param {String|Number} database redis database name
+   * @param {Object} resource resource object to release
    */
   release (database, resource) {
     if (this.options.unwatchOnRelease) {
@@ -91,7 +91,7 @@ module.exports = class RedisPool extends EventEmitter {
     }
   }
 
-  _emitStatus() {
+  _emitStatus () {
     setInterval(() => {
       for (const [poolKey, pool] of Object.entries(this.pools)) {
         this.emit('status', {
@@ -110,7 +110,7 @@ module.exports = class RedisPool extends EventEmitter {
  * Factory to create new Redis pools for a given Redis database
  * @param options
  * @param database
- * @returns {Object}
+ * @returns {Pool}
  */
 function makePool (options, database) {
   return Pool({
