@@ -4,24 +4,14 @@ const assert = require('assert');
 const RedisPool = require('..');
 const { promisify } = require('util');
 
-var redisPool;
+const TEST_OPTIONS = {
+  max: 10,
+  idleTimeoutMillis: 1,
+  reapIntervalMillis: 1,
+  port: 6379
+};
 
 describe('RedisPool', function () {
-  beforeEach(function () {
-    this.test_opts = {
-      max: 10,
-      idleTimeoutMillis: 1,
-      reapIntervalMillis: 1,
-      port: 6379
-    };
-
-    redisPool = new RedisPool(this.test_opts);
-  });
-
-  afterEach(function() {
-    redisPool = null
-  })
-
   it('RedisPool object exists', function () {
     assert.ok(RedisPool);
   });
@@ -32,14 +22,14 @@ describe('RedisPool', function () {
   });
 
   it('RedisPool can create new RedisPool objects with specific settings', function () {
-    const options = Object.assign({ host: '127.0.0.1', port: '6379' }, this.test_opts)
+    const options = Object.assign({ host: '127.0.0.1', port: '6379' }, TEST_OPTIONS)
     const redisPool = new RedisPool(options)
     assert.ok(redisPool)
   });
 
   it('Adding new command should works (but throws because the command not exists in Redis)', async function () {
     const options = Object.assign(
-      this.test_opts,
+      TEST_OPTIONS,
       { commands: ['fakeCommand'] }
     );
     const redisPool = new RedisPool(options);
@@ -56,17 +46,21 @@ describe('RedisPool', function () {
   });
 
   it('Not added command should not works', async function () {
+    const redisPool = new RedisPool(TEST_OPTIONS)
     const client = await redisPool.acquire(0)
     assert.strictEqual(client.fakeCommand, undefined);
     await redisPool.release(0, client); // needed to exit tests
   });
 
   it('pool object has an acquire function', function () {
+    const redisPool = new RedisPool(TEST_OPTIONS)
     assert.ok(typeof redisPool.acquire === 'function');
   });
 
   it('calling aquire returns a redis client object that can get/set', async function () {
+    const redisPool = new RedisPool(TEST_OPTIONS)
     const client = await redisPool.acquire(0)
+
     const set = promisify(client.set).bind(client);
     const get = promisify(client.get).bind(client);
 
@@ -78,7 +72,9 @@ describe('RedisPool', function () {
   });
 
   it('calling aquire on another DB returns a redis client object that can get/set', async function () {
+    const redisPool = new RedisPool(TEST_OPTIONS)
     const client = await redisPool.acquire(2)
+
     const set = promisify(client.set).bind(client);
     const get = promisify(client.get).bind(client);
 
@@ -91,7 +87,7 @@ describe('RedisPool', function () {
 
   // See https://github.com/CartoDB/node-redis-mpool/issues/1
   it('calling release resets connection state', async function () {
-    var tx1;
+    const redisPool = new RedisPool(TEST_OPTIONS)
 
     let client1 = await redisPool.acquire(0)
     let client2 = await redisPool.acquire(0)
@@ -103,7 +99,7 @@ describe('RedisPool', function () {
     client1 = await redisPool.acquire(0, this);
 
     // We expect this to be not watching now..
-    tx1 = client1.MULTI();
+    const tx1 = client1.MULTI();
     tx1.SET('x', 1); // 'x' will be set to 1 only if we're not watching
     const set2 = promisify(client2.set).bind(client2);
     await set2('k', 1);
@@ -142,7 +138,7 @@ describe('RedisPool', function () {
     };
 
     // test
-    const redisPool = new RedisPool(Object.assign(this.test_opts, enabledSlowPoolConfig));
+    const redisPool = new RedisPool(Object.assign(TEST_OPTIONS, enabledSlowPoolConfig));
     const client = await redisPool.acquire(0);
 
     // restore functions
@@ -155,7 +151,7 @@ describe('RedisPool', function () {
 
   it('emits `status` event after pool has been used', function (done) {
     var database = 0;
-    var redisPool = new RedisPool(Object.assign(this.test_opts, { emitter: { statusInterval: 5 } }));
+    var redisPool = new RedisPool(Object.assign(TEST_OPTIONS, { emitter: { statusInterval: 5 } }));
     redisPool.acquire(database, function (err, client) {
       redisPool.release(database, client);
     });
