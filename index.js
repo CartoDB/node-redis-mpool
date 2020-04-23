@@ -43,11 +43,8 @@ module.exports = class RedisPool extends EventEmitter {
     this.options = Object.assign(defaults, options);
     this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
 
-    // add custom Redis commands
-    if (this.options.commands && this.options.commands.length) {
-      this.options.commands.forEach(function (newCommand) {
-        redis.add_command(newCommand);
-      });
+    if (this.options.commands.length) {
+      this._addCommands(this.options.commands)
     }
 
     var self = this;
@@ -103,6 +100,10 @@ module.exports = class RedisPool extends EventEmitter {
     if (pool) {
       pool.release(resource);
     }
+  }
+
+  _addCommands (commands = []) {
+    commands.forEach(newCommand => redis.add_command(newCommand));
   }
 };
 
