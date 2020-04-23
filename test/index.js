@@ -7,7 +7,7 @@ var RedisPool = require('..');
 var redis_pool;
 
 describe('RedisPool', function () {
-  before(function () {
+  beforeEach(function () {
     this.test_opts = {
       max: 10,
       idleTimeoutMillis: 1,
@@ -33,17 +33,6 @@ describe('RedisPool', function () {
     done();
   });
 
-  it('Not added command should not works', function (done) {
-    redis_pool.acquire(0, function (err, client) {
-      if (err) { done(err); return; }
-
-      assert.strictEqual(client.fakeCommand, undefined);
-      redis_pool.release(0, client); // needed to exit tests
-
-      done();
-    });
-  });
-
   it('Adding new command should works (but throws because the command not exists in Redis)', function (done) {
     var commandsRedisPool = new RedisPool(Object.assign(
       this.test_opts,
@@ -62,6 +51,17 @@ describe('RedisPool', function () {
 
         done();
       });
+    });
+  });
+
+  it('Not added command should not works', function (done) {
+    redis_pool.acquire(0, function (err, client) {
+      if (err) { done(err); return; }
+
+      assert.strictEqual(client.fakeCommand, undefined);
+      redis_pool.release(0, client); // needed to exit tests
+
+      done();
     });
   });
 
