@@ -1,9 +1,8 @@
 'use strict';
 
-var redis = require('redis')
-  , Pool = require('generic-pool').Pool
-  , EventEmitter = require('events').EventEmitter
-  ;
+var redis = require('redis');
+var Pool = require('generic-pool').Pool;
+var EventEmitter = require('events').EventEmitter;
 
 var FLUSH_CONNECTION = true;
 
@@ -17,7 +16,7 @@ var FLUSH_CONNECTION = true;
  */
 module.exports = class RedisPool extends EventEmitter {
   constructor (options = {}) {
-    super()
+    super();
 
     const defaults = {
       host: '127.0.0.1',
@@ -105,7 +104,7 @@ module.exports = class RedisPool extends EventEmitter {
       pool.release(resource);
     }
   }
-}
+};
 
 /**
  * Factory to create new Redis pools for a given Redis database
@@ -113,12 +112,11 @@ module.exports = class RedisPool extends EventEmitter {
  * @param database
  * @returns {Object}
  */
-function makePool(options, database) {
+function makePool (options, database) {
   return Pool({
     name: options.name + ':' + database,
 
     create: function (callback) {
-
       var callbackCalled = false;
 
       var client = redis.createClient(options.port, options.host, {
@@ -135,7 +133,7 @@ function makePool(options, database) {
       });
 
       client.on('ready', function () {
-        client.select(database, function (err/*, res*/) {
+        client.select(database, function (err/*, res */) {
           if (!callbackCalled) {
             callbackCalled = true;
             callback(err, client);
@@ -161,7 +159,7 @@ function makePool(options, database) {
   });
 }
 
-function log(options, what) {
+function log (options, what) {
   if (options.slowPool.log) {
     console.log(JSON.stringify(Object.assign({ name: options.name }, what)));
   }
