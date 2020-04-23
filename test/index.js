@@ -4,8 +4,9 @@ const assert = require('assert');
 const RedisPool = require('..');
 const { promisify } = require('util');
 
+const MAX_POOLS = 2
 const TEST_OPTIONS = {
-  max: 10,
+  max: MAX_POOLS,
   idleTimeoutMillis: 1,
   reapIntervalMillis: 1,
   port: 6379
@@ -27,28 +28,47 @@ describe('RedisPool', function () {
     assert.ok(redisPool)
   });
 
-  it('Adding new command should works (but throws because the command does not exists in Redis)', async function () {
+  it('pool has proper size, available and pending', async function () {
+    const DATABASE = 0
+
+    const options = Object.assign(TEST_OPTIONS)
+    const redisPool = new RedisPool(options)
+
+    const client1 = await redisPool.acquire(DATABASE)
+    const client2 = await redisPool.acquire(DATABASE)
+
+    let pool = redisPool.pools[DATABASE]
+
+    assert.equal(pool.size, 2)
+    assert.equal(pool.available, 0)
+    assert.equal(pool.pending, 0)
+
+    await redisPool.release(0, client1); // needed to exit tests
+    await redisPool.release(0, client2); // needed to exit tests
+  });
+
+  it('new command only works after adding it to Redis', async function () {
+    const NEW_COMMAND = 'fakeCommand'
+
+    let redisPool = new RedisPool(TEST_OPTIONS)
+    let client = await redisPool.acquire(0)
+    assert.strictEqual(client[NEW_COMMAND], undefined);
+    await redisPool.release(0, client);
+
     const options = Object.assign(
       TEST_OPTIONS,
       { commands: ['fakeCommand'] }
     );
-    const redisPool = new RedisPool(options);
+    redisPool = new RedisPool(options);
 
-    const client = await redisPool.acquire(0)
-    const fakeCommand = promisify(client.fakeCommand).bind(client);
+    client = await redisPool.acquire(0)
+    const fakeCommand = promisify(client[NEW_COMMAND]).bind(client);
 
     await fakeCommand('key').catch(async (error) => {
       assert.equal(error.name, 'ReplyError');
       assert.equal(error.message, "ERR unknown command 'fakeCommand'");
     })
 
-    await redisPool.release(0, client); // needed to exit tests
-  });
-
-  it('Not added command should not work', async function () {
-    const redisPool = new RedisPool(TEST_OPTIONS)
-    const client = await redisPool.acquire(0)
-    assert.strictEqual(client.fakeCommand, undefined);
     await redisPool.release(0, client); // needed to exit tests
   });
 
