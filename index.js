@@ -1,7 +1,6 @@
 'use strict';
 
 var redis = require('redis')
-    , _ = require('underscore')
     , Pool = require('generic-pool').Pool
     , EventEmitter = require('events').EventEmitter
     , util = require('util')
@@ -47,7 +46,7 @@ function RedisPool(opts) {
         commands: []
     };
 
-    this.options = _.defaults(opts, defaults);
+    this.options = Object.assign(defaults, options);
     this.pools = {};
     this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
 
@@ -178,6 +177,6 @@ function makePool(options, database) {
 
 function log(options, what) {
     if (options.slowPool.log) {
-        console.log(JSON.stringify(_.extend({name: options.name}, what)));
+      console.log(JSON.stringify(Object.assign({ name: options.name }, what)));
     }
 }
