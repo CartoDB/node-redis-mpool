@@ -45,25 +45,26 @@ module.exports = class RedisPool extends EventEmitter {
   }
 
   /**
-   * Acquire resource
+   * Acquire Redis client
    *
    * @param {String|Number} database redis database name
-   * @param {Function} callback Callback to call once acquired. Takes the form `callback(err, resource)`
+   * @returns {Promise} with the Redis client
    */
-  acquire (database, callback) {
+  async acquire (database) {
     let pool = this.pools[database];
     if (!pool) {
       pool = this.pools[database] = makePool(this.options, database);
     }
 
     const startTime = Date.now();
-    pool.acquire((err, client) => {
-      const elapsedTime = Date.now() - startTime;
-      if (elapsedTime > this.options.slowPool.elapsedThreshold) {
-        log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount() });
-      }
-      callback(err, client);
-    });
+    const client = await pool.acquire()
+    const elapsedTime = Date.now() - startTime;
+
+    if (elapsedTime > this.options.slowPool.elapsedThreshold) {
+      log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+    }
+
+    return client;
   }
 
   /**
@@ -72,7 +73,7 @@ module.exports = class RedisPool extends EventEmitter {
    * @param {String|Number} database redis database name
    * @param {Object} resource resource object to release
    */
-  release (database, resource) {
+  async release (database, resource) {
     if (this.options.unwatchOnRelease) {
       resource.UNWATCH();
     }
@@ -80,7 +81,7 @@ module.exports = class RedisPool extends EventEmitter {
     const pool = this.pools[database];
 
     if (pool) {
-      pool.release(resource);
+      await pool.release(resource);
     }
   }
 
@@ -96,9 +97,9 @@ module.exports = class RedisPool extends EventEmitter {
         this.emit('status', {
           name: this.options.name,
           db: poolKey,
-          count: pool.getPoolSize(),
-          unused: pool.availableObjectsCount(),
-          waiting: pool.waitingClientsCount()
+          count: pool.size,
+          unused: pool.available,
+          waiting: pool.pending
         });
       }
     }, this.options.emitter.statusInterval);
