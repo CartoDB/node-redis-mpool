@@ -22,7 +22,7 @@
     "Daniel García Aubert <dgaubert@carto.com>"
   ],
   "dependencies": {
-    "generic-pool": "~2.1.1",
+    "generic-pool": "^3.7.1",
     "redis": "^2.8.0"
   },
   "devDependencies": {
