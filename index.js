@@ -95,8 +95,7 @@ module.exports = class RedisPool extends EventEmitter {
 
   _emitStatus(statusInterval) {
     setInterval(() => {
-      Object.keys(this.pools).forEach(poolKey => {
-        const pool = this.pools[poolKey];
+      for (const [poolKey, pool] of Object.entries(this.pools)) {
         this.emit('status', {
           name: this.options.name,
           db: poolKey,
@@ -104,7 +103,7 @@ module.exports = class RedisPool extends EventEmitter {
           unused: pool.availableObjectsCount(),
           waiting: pool.waitingClientsCount()
         });
-      });
+      }
     }, statusInterval);
   }
 };
