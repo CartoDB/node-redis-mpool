@@ -107,8 +107,6 @@ module.exports = class RedisPool extends EventEmitter {
   }
 }
 
-
-
 /**
  * Factory to create new Redis pools for a given Redis database
  * @param options
