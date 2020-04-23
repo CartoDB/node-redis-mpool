@@ -1,11 +1,10 @@
 'use strict';
 
-var redis = require('redis');
-var Pool = require('generic-pool').Pool;
-var EventEmitter = require('events').EventEmitter;
+const redis = require('redis');
+const Pool = require('generic-pool').Pool;
+const EventEmitter = require('events').EventEmitter;
 
-var FLUSH_CONNECTION = true;
-
+const FLUSH_CONNECTION = true;
 const DEFAULTS = {
   host: '127.0.0.1',
   port: '6379',
@@ -57,14 +56,14 @@ module.exports = class RedisPool extends EventEmitter {
    * @param {Function} callback Callback to call once acquired. Takes the form `callback(err, resource)`
    */
   acquire (database, callback) {
-    var pool = this.pools[database];
+    let pool = this.pools[database];
     if (!pool) {
       pool = this.pools[database] = makePool(this.options, database);
     }
 
-    var startTime = Date.now();
+    const startTime = Date.now();
     pool.acquire((err, client) => {
-      var elapsedTime = Date.now() - startTime;
+      const elapsedTime = Date.now() - startTime;
       if (elapsedTime > this.elapsedThreshold) {
         log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount() });
       }
@@ -83,7 +82,7 @@ module.exports = class RedisPool extends EventEmitter {
       resource.UNWATCH();
     }
 
-    var pool = this.pools[database];
+    const pool = this.pools[database];
 
     if (pool) {
       pool.release(resource);
@@ -97,7 +96,7 @@ module.exports = class RedisPool extends EventEmitter {
   _emitStatus(statusInterval) {
     setInterval(() => {
       Object.keys(this.pools).forEach(poolKey => {
-        var pool = this.pools[poolKey];
+        const pool = this.pools[poolKey];
         this.emit('status', {
           name: this.options.name,
           db: poolKey,
@@ -121,9 +120,9 @@ function makePool (options, database) {
     name: options.name + ':' + database,
 
     create: function (callback) {
-      var callbackCalled = false;
+      let callbackCalled = false;
 
-      var client = redis.createClient(options.port, options.host, {
+      const client = redis.createClient(options.port, options.host, {
         no_ready_check: options.noReadyCheck
       });
 
