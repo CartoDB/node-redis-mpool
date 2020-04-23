@@ -3,8 +3,7 @@
 var assert = require('assert')
   , Step = require('step')
   , _ = require('underscore')
-  , RedisPool = require('../')
-  , tests = module.exports = {};
+  , RedisPool = require('..');
 
 var redis_pool
 
