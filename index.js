@@ -41,8 +41,8 @@ module.exports = class RedisPool extends EventEmitter {
     this.pools = {};
     this.options = Object.assign({}, DEFAULTS, options);
 
-    this._addCommands();
-    this._emitStatus();
+    this._addCommands()
+    this._emitStatus()
   }
 
   /**
@@ -91,7 +91,7 @@ module.exports = class RedisPool extends EventEmitter {
     }
   }
 
-  _emitStatus () {
+  _emitStatus() {
     setInterval(() => {
       for (const [poolKey, pool] of Object.entries(this.pools)) {
         this.emit('status', {

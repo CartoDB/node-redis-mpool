@@ -18,36 +18,39 @@ describe('RedisPool', function () {
     redis_pool = new RedisPool(this.test_opts);
   });
 
-  it('RedisPool object exists', function (done) {
+  afterEach(function() {
+    redis_pool = null
+  })
+
+  it('RedisPool object exists', function () {
     assert.ok(RedisPool);
-    done();
   });
 
-  it('RedisPool can create new RedisPool objects with default settings', function (done) {
-    new RedisPool();
-    done();
+  it('RedisPool can create new RedisPool objects with default settings', function () {
+    const redisPool = new RedisPool()
+    assert.ok(redisPool)
   });
 
-  it('RedisPool can create new RedisPool objects with specific settings', function (done) {
-    new RedisPool(Object.assign({ host: '127.0.0.1', port: '6379' }, this.test_opts));
-    done();
+  it('RedisPool can create new RedisPool objects with specific settings', function () {
+    const options = Object.assign({ host: '127.0.0.1', port: '6379' }, this.test_opts)
+    const redisPool = new RedisPool(options)
+    assert.ok(redisPool)
   });
 
   it('Adding new command should works (but throws because the command not exists in Redis)', function (done) {
-    var commandsRedisPool = new RedisPool(Object.assign(
+    const options = Object.assign(
       this.test_opts,
-      {
-        commands: ['fakeCommand']
-      }
-    ));
+      { commands: ['fakeCommand'] }
+    );
+    const redisPool = new RedisPool(options);
 
-    commandsRedisPool.acquire(0, function (err, client) {
+    redisPool.acquire(0, function (err, client) {
       if (err) { done(err); return; }
 
       client.fakeCommand('key', function (err, data) {
         assert.equal(err.name, 'ReplyError');
         assert.equal(err.message, "ERR unknown command 'fakeCommand'");
-        commandsRedisPool.release(0, client); // needed to exit tests
+        redisPool.release(0, client); // needed to exit tests
 
         done();
       });
