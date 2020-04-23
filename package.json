@@ -23,7 +23,6 @@
   ],
   "dependencies": {
     "generic-pool": "~2.1.1",
-    "hiredis": "~0.5.0",
     "redis": "^2.8.0",
     "underscore": "~1.6.0"
   },
