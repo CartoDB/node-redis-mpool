@@ -47,18 +47,7 @@ module.exports = class RedisPool extends EventEmitter {
       this._addCommands(this.options.commands)
     }
 
-    setInterval(() => {
-      Object.keys(this.pools).forEach(poolKey => {
-        var pool = this.pools[poolKey];
-        this.emit('status', {
-          name: this.options.name,
-          db: poolKey,
-          count: pool.getPoolSize(),
-          unused: pool.availableObjectsCount(),
-          waiting: pool.waitingClientsCount()
-        });
-      });
-    }, this.options.emitter.statusInterval);
+    this._emitStatus(this.options.emitter.statusInterval)
   }
 
   /**
@@ -103,6 +92,21 @@ module.exports = class RedisPool extends EventEmitter {
 
   _addCommands (commands = []) {
     commands.forEach(newCommand => redis.add_command(newCommand));
+  }
+
+  _emitStatus(statusInterval) {
+    setInterval(() => {
+      Object.keys(this.pools).forEach(poolKey => {
+        var pool = this.pools[poolKey];
+        this.emit('status', {
+          name: this.options.name,
+          db: poolKey,
+          count: pool.getPoolSize(),
+          unused: pool.availableObjectsCount(),
+          waiting: pool.waitingClientsCount()
+        });
+      });
+    }, statusInterval);
   }
 };
 
