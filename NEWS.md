@@ -1,12 +1,17 @@
 # 1.0.0 (2020-04-xx)
 
- - Using promises
+### Breaking changes
+ - Use promises
+
+### Changed
  - ES2020 style
  - removing hiredis and using node-redis
  - removing makefile and use npm scripts
  - removing underscore
  - removing dot
- - updating dependencies version
+ - updating dependencies versions
+
+### Added
  - adding eslint (standard)
 
 # 0.7.0 (2018-11-21)
