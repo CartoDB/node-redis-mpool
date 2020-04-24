@@ -1,4 +1,4 @@
-# 1.0.0 (2020-04-xx)
+# 0.8.0 (2020-mm-dd)
 
 ### Breaking changes
  - Use promises
