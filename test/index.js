@@ -64,10 +64,13 @@ describe('RedisPool', function () {
     client = await redisPool.acquire(0)
     const fakeCommand = promisify(client[NEW_COMMAND]).bind(client);
 
-    await fakeCommand('key').catch(async (error) => {
+    const response = await fakeCommand('key').catch(async (error) => {
       assert.equal(error.name, 'ReplyError');
-      assert.equal(error.message, "ERR unknown command 'fakeCommand'");
+      assert.ok(error.message.startsWith("ERR unknown command"));
+      assert.ok(error.message.includes('fakeCommand'));
     })
+
+    assert.ok(response === undefined)
 
     await redisPool.release(0, client); // needed to exit tests
   });
