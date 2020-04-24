@@ -16,6 +16,7 @@ module.exports = {
     ecmaVersion: 2018
   },
   rules: {
-    "semi": ["error", "always"]
+    indent: ["error", 4],
+    semi: ["error", "always"]
   }
 };
