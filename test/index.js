@@ -37,7 +37,7 @@ describe('RedisPool', function () {
     const client1 = await redisPool.acquire(DATABASE)
     const client2 = await redisPool.acquire(DATABASE)
 
-    let pool = redisPool.pools[DATABASE]
+    const pool = redisPool.pools[DATABASE]
 
     assert.equal(pool.size, 2)
     assert.equal(pool.available, 0)
