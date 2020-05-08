@@ -5,6 +5,7 @@ const redis = require('redis');
 const { createPool } = require('generic-pool');
 
 const FLUSH_CONNECTION = true;
+const DEFAULT_STATUS_INTERVAL = 60000
 const DEFAULTS = {
     host: '127.0.0.1',
     port: '6379',
@@ -20,7 +21,7 @@ const DEFAULTS = {
         elapsedThreshold: 25
     },
     emitter: {
-        statusInterval: 60000
+        statusInterval: DEFAULT_STATUS_INTERVAL
     },
     commands: []
 };
@@ -102,7 +103,11 @@ module.exports = class RedisPool extends EventEmitter {
                     waiting: pool.pending
                 });
             }
-        }, this.options.emitter.statusInterval);
+        }, this._getStatusDelay());
+    }
+
+    _getStatusDelay() {
+        return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
     }
 };
 
@@ -114,8 +119,10 @@ module.exports = class RedisPool extends EventEmitter {
  */
 function makePool (options, database) {
     const factory = {
+        // create function will loop forever if reject is called or exception is thrown
+        // https://github.com/coopernurse/node-pool/issues/175
         create () {
-            return new Promise((resolve, reject) => {
+            return new Promise(resolve => {
                 let settled = false;
 
                 const client = redis.createClient(options.port, options.host, {
@@ -130,7 +137,7 @@ function makePool (options, database) {
                         client.end(FLUSH_CONNECTION);
 
                         if (err) {
-                            return reject(err);
+                            return resolve(err);
                         }
                         return resolve(client);
                     }
@@ -142,7 +149,7 @@ function makePool (options, database) {
                             settled = true;
 
                             if (err) {
-                                return reject(err);
+                                return resolve(err);
                             }
                             return resolve(client);
                         }
