@@ -84,7 +84,7 @@ describe('RedisPool', function () {
     const redisPool = new RedisPool(TEST_OPTIONS)
     const client = await redisPool.acquire(0)
 
-    const set = promisify(client.set).bind(client);
+    const set = promisify(client.set.bind(client));
     const get = promisify(client.get).bind(client);
 
     await set('key', 'value');
