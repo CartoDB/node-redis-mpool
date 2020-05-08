@@ -28,6 +28,12 @@ describe('RedisPool', function () {
         assert.ok(redisPool);
     });
 
+    it('ensure RedisPool has status delay', function () {
+        const options = Object.assign({ emitter: {} }, TEST_OPTIONS);
+        const redisPool = new RedisPool(options);
+        assert.equal(redisPool._getStatusDelay(), 60000);
+    });
+
     it('pool has proper size, available and pending', async function () {
         const DATABASE = 0;
 
