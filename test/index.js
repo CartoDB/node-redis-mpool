@@ -159,8 +159,8 @@ describe('RedisPool', function () {
             return times++ * elapsedThreshold * 2;
         };
 
-        const consoleLogFunc = console.log;
-        console.log = function (what) {
+        const consoleLogFunc = console.error;
+        console.error = function (what) {
             const whatObj = JSON.parse(what);
             logWasCalled = whatObj && whatObj.action && whatObj.action === 'acquire';
             consoleLogFunc.apply(console, arguments);
@@ -171,7 +171,7 @@ describe('RedisPool', function () {
         const client = await redisPool.acquire(0);
 
         // restore functions
-        console.log = consoleLogFunc;
+        console.error = consoleLogFunc;
         Date.now = dateNowFunc;
 
         redisPool.release(0, client);

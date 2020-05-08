@@ -35,11 +35,12 @@ const DEFAULTS = {
  * @constructor
  */
 module.exports = class RedisPool extends EventEmitter {
-    constructor (options = {}) {
+    constructor (options = {}, logger = console) {
         super();
 
         this.pools = {};
         this.options = Object.assign({}, DEFAULTS, options);
+        this.logger = logger
 
         this._addCommands();
         this._emitStatus();
@@ -54,7 +55,7 @@ module.exports = class RedisPool extends EventEmitter {
     async acquire (database) {
         let pool = this.pools[database];
         if (!pool) {
-            pool = this.pools[database] = makePool(this.options, database);
+            pool = this.pools[database] = makePool(this, database);
         }
 
         const startTime = Date.now();
@@ -62,7 +63,7 @@ module.exports = class RedisPool extends EventEmitter {
         const elapsedTime = Date.now() - startTime;
 
         if (elapsedTime > this.options.slowPool.elapsedThreshold) {
-            log(this.options, { db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+            this._log({ db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
         }
 
         return client;
@@ -109,15 +110,24 @@ module.exports = class RedisPool extends EventEmitter {
     _getStatusDelay() {
         return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
     }
+
+    _log(info) {
+        if (!this.options.slowPool.log) {
+            return;
+        }
+
+        info = Object.assign({ name: this.options.name }, info)
+        this.logger.error(JSON.stringify(info));
+    }
 };
 
 /**
  * Factory to create new Redis pools for a given Redis database
- * @param options
+ * @param redisPool
  * @param database
  * @returns {Pool}
  */
-function makePool (options, database) {
+function makePool (redisPool, database) {
     const factory = {
         // create function will loop forever if reject is called or exception is thrown
         // https://github.com/coopernurse/node-pool/issues/175
@@ -125,12 +135,12 @@ function makePool (options, database) {
             return new Promise(resolve => {
                 let settled = false;
 
-                const client = redis.createClient(options.port, options.host, {
-                    no_ready_check: options.noReadyCheck
+                const client = redis.createClient(redisPool.options.port, redisPool.options.host, {
+                    no_ready_check: redisPool.options.noReadyCheck
                 });
 
                 client.on('error', function (err) {
-                    log(options, { db: database, action: 'error', err: err.message });
+                    redisPool._log({ db: database, action: 'error', err: err.message });
 
                     if (!settled) {
                         settled = true;
@@ -178,17 +188,11 @@ function makePool (options, database) {
     };
 
     const config = {
-        max: options.max,
-        idleTimeoutMillis: options.idleTimeoutMillis,
-        reapIntervalMillis: options.reapIntervalMillis,
-        returnToHead: options.returnToHead
+        max: redisPool.options.max,
+        idleTimeoutMillis: redisPool.options.idleTimeoutMillis,
+        reapIntervalMillis: redisPool.options.reapIntervalMillis,
+        returnToHead: redisPool.options.returnToHead
     };
 
     return createPool(factory, config);
-}
-
-function log (options, what) {
-    if (options.slowPool.log) {
-        console.log(JSON.stringify(Object.assign({ name: options.name }, what)));
-    }
 }
