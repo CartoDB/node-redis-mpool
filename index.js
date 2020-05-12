@@ -139,7 +139,7 @@ function makePool (redisPool, database) {
                     no_ready_check: redisPool.options.noReadyCheck
                 });
 
-                client.on('error', function (err) {
+                client.on('error', (err) => {
                     redisPool._log({ db: database, action: 'error', err: err.message });
 
                     if (!settled) {
@@ -153,7 +153,7 @@ function makePool (redisPool, database) {
                     }
                 });
 
-                client.on('ready', function () {
+                client.on('ready', () => {
                     client.select(database, err => {
                         if (!settled) {
                             settled = true;
