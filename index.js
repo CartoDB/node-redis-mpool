@@ -62,7 +62,7 @@ module.exports = class RedisPool extends EventEmitter {
         const client = await pool.acquire();
         const elapsedTime = Date.now() - startTime;
 
-        if (elapsedTime > this.options.slowPool.elapsedThreshold) {
+        if (this.options.slowPool.log && elapsedTime > this.options.slowPool.elapsedThreshold) {
             this._log({ db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
         }
 
@@ -112,10 +112,6 @@ module.exports = class RedisPool extends EventEmitter {
     }
 
     _log(info) {
-        if (!this.options.slowPool.log) {
-            return;
-        }
-
         info = Object.assign({ name: this.options.name }, info)
         this.logger.error(JSON.stringify(info));
     }
