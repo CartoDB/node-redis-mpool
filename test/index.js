@@ -143,7 +143,7 @@ describe('RedisPool', function () {
         await redisPool.release(0, client2);
     });
 
-    it('log is called if elapsed time is above configured one', async function () {
+    it('logger is called if elapsed time is above configured one', async function () {
         let logWasCalled = false;
         const elapsedThreshold = 25;
         const enabledSlowPoolConfig = {
@@ -160,10 +160,10 @@ describe('RedisPool', function () {
         };
 
         const consoleLogFunc = console.error;
-        console.error = function (what) {
-            const whatObj = JSON.parse(what);
-            logWasCalled = whatObj && whatObj.action && whatObj.action === 'acquire';
-            consoleLogFunc.apply(console, arguments);
+        console.info = function (what) {
+            logWasCalled = what && what.action && what.action === 'acquire';
+            // uncomment the following line for debugging
+            // consoleLogFunc.apply(console, arguments);
         };
 
         // test
