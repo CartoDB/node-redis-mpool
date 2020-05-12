@@ -63,7 +63,7 @@ module.exports = class RedisPool extends EventEmitter {
         const elapsedTime = Date.now() - startTime;
 
         if (this.options.slowPool.log && elapsedTime > this.options.slowPool.elapsedThreshold) {
-            this._log({ db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+            this.logger.info({ name: this.options.name, db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
         }
 
         return client;
@@ -110,10 +110,6 @@ module.exports = class RedisPool extends EventEmitter {
     _getStatusDelay() {
         return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
     }
-
-    _log(info) {
-        this.logger.error(JSON.stringify(Object.assign({ name: this.options.name }, info)));
-    }
 };
 
 /**
@@ -135,7 +131,10 @@ function makePool (redisPool, database) {
                 });
 
                 client.on('error', (err) => {
-                    redisPool._log({ db: database, action: 'error', err: err.message });
+                    err.name = redisPool.options.name;
+                    err.db = database;
+                    err.action = 'create';
+                    redisPool.logger.error(err);
 
                     if (!settled) {
                         settled = true;
@@ -144,6 +143,7 @@ function makePool (redisPool, database) {
                         if (err) {
                             return resolve(err);
                         }
+
                         return resolve(client);
                     }
                 });
