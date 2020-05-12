@@ -112,8 +112,7 @@ module.exports = class RedisPool extends EventEmitter {
     }
 
     _log(info) {
-        info = Object.assign({ name: this.options.name }, info)
-        this.logger.error(JSON.stringify(info));
+        this.logger.error(JSON.stringify(Object.assign({ name: this.options.name }, info)));
     }
 };
 
