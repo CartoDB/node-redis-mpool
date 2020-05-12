@@ -40,7 +40,7 @@ module.exports = class RedisPool extends EventEmitter {
 
         this.pools = {};
         this.options = Object.assign({}, DEFAULTS, options);
-        this.logger = logger
+        this.logger = logger;
 
         this._addCommands();
         this._emitStatus();
@@ -107,7 +107,7 @@ module.exports = class RedisPool extends EventEmitter {
         }, this._getStatusDelay());
     }
 
-    _getStatusDelay() {
+    _getStatusDelay () {
         return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
     }
 };
