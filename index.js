@@ -66,6 +66,16 @@ module.exports = class RedisPool extends EventEmitter {
             this.logger.info({ name: this.options.name, db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
         }
 
+        if (client instanceof Error) {
+            const err = client;
+            err.name = this.options.name;
+            err.db = database;
+            err.action = 'acquire';
+            this.logger.error(err);
+
+            throw err;
+        }
+
         return client;
     }
 
@@ -131,11 +141,6 @@ function makePool (redisPool, database) {
                 });
 
                 client.on('error', (err) => {
-                    err.name = redisPool.options.name;
-                    err.db = database;
-                    err.action = 'create';
-                    redisPool.logger.error(err);
-
                     if (!settled) {
                         settled = true;
                         client.end(FLUSH_CONNECTION);
