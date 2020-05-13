@@ -141,16 +141,19 @@ function makePool (redisPool, database) {
                 });
 
                 client.on('error', (err) => {
-                    if (!settled) {
-                        settled = true;
-                        client.end(FLUSH_CONNECTION);
-
-                        if (err) {
-                            return resolve(err);
-                        }
-
-                        return resolve(client);
+                    if (settled) {
+                        err.name = redisPool.options.name;
+                        return redisPool.logger.error(err);
                     }
+
+                    settled = true;
+                    client.end(FLUSH_CONNECTION);
+
+                    if (err) {
+                        return resolve(err);
+                    }
+
+                    return resolve(client);
                 });
 
                 client.on('ready', () => {
@@ -161,6 +164,7 @@ function makePool (redisPool, database) {
                             if (err) {
                                 return resolve(err);
                             }
+
                             return resolve(client);
                         }
                     });
