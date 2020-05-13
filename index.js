@@ -1,183 +1,202 @@
 'use strict';
 
-var redis = require('redis')
-    , _ = require('underscore')
-    , Pool = require('generic-pool').Pool
-    , EventEmitter = require('events').EventEmitter
-    , util = require('util')
-    ;
+const EventEmitter = require('events').EventEmitter;
+const redis = require('redis');
+const { createPool } = require('generic-pool');
 
-var FLUSH_CONNECTION = true;
+const FLUSH_CONNECTION = true;
+const DEFAULT_STATUS_INTERVAL = 60000
+const DEFAULTS = {
+    host: '127.0.0.1',
+    port: '6379',
+    max: 50,
+    idleTimeoutMillis: 10000,
+    reapIntervalMillis: 1000,
+    noReadyCheck: false,
+    returnToHead: false,
+    unwatchOnRelease: true,
+    name: 'default',
+    slowPool: {
+        log: false,
+        elapsedThreshold: 25
+    },
+    emitter: {
+        statusInterval: DEFAULT_STATUS_INTERVAL
+    },
+    commands: []
+};
 
 /**
  * Create a new multi database Redis pool.
  * It will emit `status` event with information about each created pool.
  *
- * @param {Object} opts
+ * @param {Object} options
  * @returns {RedisPool}
  * @constructor
  */
-function RedisPool(opts) {
+module.exports = class RedisPool extends EventEmitter {
+    constructor (options = {}, logger = console) {
+        super();
 
-    if (!(this instanceof RedisPool)) {
-        return new RedisPool(opts);
+        this.pools = {};
+        this.options = Object.assign({}, DEFAULTS, options);
+        this.logger = logger;
+
+        this._addCommands();
+        this._emitStatus();
     }
 
-    EventEmitter.call(this);
-
-    opts = opts || {};
-    var defaults = {
-        host: '127.0.0.1',
-        port: '6379',
-        max: 50,
-        idleTimeoutMillis: 10000,
-        reapIntervalMillis: 1000,
-        noReadyCheck: false,
-        returnToHead: false,
-        unwatchOnRelease: true,
-        name: 'default',
-        log: false,
-        slowPool: {
-            log: false,
-            elapsedThreshold: 25
-        },
-        emitter: {
-            statusInterval: 60000
-        },
-        commands: []
-    };
-
-    this.options = _.defaults(opts, defaults);
-    this.pools = {};
-    this.elapsedThreshold = this.options.slowPool.elapsedThreshold;
-
-    // add custom Redis commands
-    if (this.options.commands && this.options.commands.length) {
-        this.options.commands.forEach(function(newCommand) {
-            redis.add_command(newCommand);
-        });
-    }
-
-    var self = this;
-    setInterval(function() {
-        Object.keys(self.pools).forEach(function(poolKey) {
-            var pool = self.pools[poolKey];
-            self.emit('status', {
-                name: self.options.name,
-                db: poolKey,
-                count: pool.getPoolSize(),
-                unused: pool.availableObjectsCount(),
-                waiting:  pool.waitingClientsCount()
-            });
-        });
-    }, this.options.emitter.statusInterval);
-}
-
-util.inherits(RedisPool, EventEmitter);
-
-
-module.exports = RedisPool;
-
-
-/**
- * Acquire resource
- *
- * @param {String|Number} database redis database name
- * @param {Function} callback Callback to call once acquired. Takes the form `callback(err, resource)`
- */
-RedisPool.prototype.acquire = function(database, callback) {
-    var self = this;
-    var pool = this.pools[database];
-    if (!pool) {
-        pool = this.pools[database] = makePool(this.options, database);
-    }
-    var startTime = Date.now();
-    pool.acquire(function(err, client) {
-        var elapsedTime = Date.now() - startTime;
-        if (elapsedTime > self.elapsedThreshold) {
-            log(self.options, {db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.waitingClientsCount()});
+    /**
+   * Acquire Redis client
+   *
+   * @param {String|Number} database redis database name
+   * @returns {Promise} with the Redis client
+   */
+    async acquire (database) {
+        let pool = this.pools[database];
+        if (!pool) {
+            pool = this.pools[database] = makePool(this, database);
         }
-        callback(err, client);
-    });
-};
 
+        const startTime = Date.now();
+        const client = await pool.acquire();
+        const elapsedTime = Date.now() - startTime;
 
-/**
- * Release resource.
- *
- * @param database {String|Number} redis database name
- * @param resource {Object} resource object to release
- */
-RedisPool.prototype.release = function(database, resource) {
-    if (this.options.unwatchOnRelease) {
-        resource.UNWATCH();
+        if (this.options.slowPool.log && elapsedTime > this.options.slowPool.elapsedThreshold) {
+            this.logger.info({ name: this.options.name, db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+        }
+
+        if (client instanceof Error) {
+            const err = client;
+            err.name = this.options.name;
+            err.db = database;
+            err.action = 'acquire';
+            this.logger.error(err);
+
+            throw err;
+        }
+
+        return client;
     }
 
-    var pool = this.pools[database];
+    /**
+   * Release resource.
+   *
+   * @param {String|Number} database redis database name
+   * @param {Object} resource resource object to release
+   */
+    async release (database, resource) {
+        if (this.options.unwatchOnRelease) {
+            resource.UNWATCH();
+        }
 
-    if (pool) {
-        pool.release(resource);
+        const pool = this.pools[database];
+
+        if (pool) {
+            await pool.release(resource);
+        }
+    }
+
+    _addCommands () {
+        if (this.options.commands.length) {
+            this.options.commands.forEach(newCommand => redis.add_command(newCommand));
+        }
+    }
+
+    _emitStatus () {
+        setInterval(() => {
+            for (const [poolKey, pool] of Object.entries(this.pools)) {
+                this.emit('status', {
+                    name: this.options.name,
+                    db: poolKey,
+                    count: pool.size,
+                    unused: pool.available,
+                    waiting: pool.pending
+                });
+            }
+        }, this._getStatusDelay());
+    }
+
+    _getStatusDelay () {
+        return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
     }
 };
-
 
 /**
  * Factory to create new Redis pools for a given Redis database
- * @param options
+ * @param redisPool
  * @param database
- * @returns {Object}
+ * @returns {Pool}
  */
-function makePool(options, database) {
-    return Pool({
-        name: options.name + ':' + database,
+function makePool (redisPool, database) {
+    const factory = {
+        // create function will loop forever if reject is called or exception is thrown
+        // https://github.com/coopernurse/node-pool/issues/175
+        create () {
+            return new Promise(resolve => {
+                let settled = false;
 
-        create: function(callback) {
+                const client = redis.createClient(redisPool.options.port, redisPool.options.host, {
+                    no_ready_check: redisPool.options.noReadyCheck
+                });
 
-            var callbackCalled = false;
-
-            var client = redis.createClient(options.port, options.host, {
-                no_ready_check: options.noReadyCheck
-            });
-
-            client.on('error', function (err) {
-                log(options, {db: database, action: 'error', err: err.message});
-                if (!callbackCalled) {
-                    callbackCalled = true;
-                    callback(err, client);
-                }
-                client.end(FLUSH_CONNECTION);
-            });
-
-            client.on('ready', function () {
-                client.select(database, function(err/*, res*/) {
-                    if (!callbackCalled) {
-                        callbackCalled = true;
-                        callback(err, client);
+                client.on('error', (err) => {
+                    if (settled) {
+                        err.name = redisPool.options.name;
+                        return redisPool.logger.error(err);
                     }
+
+                    settled = true;
+                    client.end(FLUSH_CONNECTION);
+
+                    if (err) {
+                        return resolve(err);
+                    }
+
+                    return resolve(client);
+                });
+
+                client.on('ready', () => {
+                    client.select(database, err => {
+                        if (!settled) {
+                            settled = true;
+
+                            if (err) {
+                                return resolve(err);
+                            }
+
+                            return resolve(client);
+                        }
+                    });
                 });
             });
         },
 
-        destroy: function(client) {
-            client.quit();
-            client.end(FLUSH_CONNECTION);
+        destroy (client) {
+            return new Promise((resolve, reject) => {
+                client.quit(err => {
+                    client.end(FLUSH_CONNECTION);
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve();
+                });
+            });
         },
 
-        validate: function(client) {
-            return client && client.connected;
-        },
+        validate (client) {
+            return new Promise(resolve => {
+                return resolve(client && client.connected);
+            });
+        }
+    };
 
-        max: options.max,
-        idleTimeoutMillis: options.idleTimeoutMillis,
-        reapIntervalMillis: options.reapIntervalMillis,
-        returnToHead: options.returnToHead,
-        log: options.log
-    });
-}
+    const config = {
+        max: redisPool.options.max,
+        idleTimeoutMillis: redisPool.options.idleTimeoutMillis,
+        reapIntervalMillis: redisPool.options.reapIntervalMillis,
+        returnToHead: redisPool.options.returnToHead
+    };
 
-
-function log(options, what) {
-    if (options.slowPool.log) {
-        console.log(JSON.stringify(_.extend({name: options.name}, what)));
-    }
+    return createPool(factory, config);
 }
