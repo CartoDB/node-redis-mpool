@@ -1,9 +1,11 @@
 # 0.8.0 (2020-mm-dd)
 
 ### Breaking changes
+ - Drop support for Node.js < 12
  - Use promises
 
 ### Changed
+ - Add support for Node.js 12
  - ES2020 style
  - removing hiredis and using node-redis
  - removing makefile and use npm scripts
