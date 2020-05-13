@@ -40,7 +40,7 @@ module.exports = class RedisPool extends EventEmitter {
 
         this.pools = {};
         this.options = Object.assign({}, DEFAULTS, options);
-        this.logger = logger
+        this.logger = logger;
 
         this._addCommands();
         this._emitStatus();
@@ -62,8 +62,18 @@ module.exports = class RedisPool extends EventEmitter {
         const client = await pool.acquire();
         const elapsedTime = Date.now() - startTime;
 
-        if (elapsedTime > this.options.slowPool.elapsedThreshold) {
-            this._log({ db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+        if (this.options.slowPool.log && elapsedTime > this.options.slowPool.elapsedThreshold) {
+            this.logger.info({ name: this.options.name, db: database, action: 'acquire', elapsed: elapsedTime, waiting: pool.pending });
+        }
+
+        if (client instanceof Error) {
+            const err = client;
+            err.name = this.options.name;
+            err.db = database;
+            err.action = 'acquire';
+            this.logger.error(err);
+
+            throw err;
         }
 
         return client;
@@ -107,17 +117,8 @@ module.exports = class RedisPool extends EventEmitter {
         }, this._getStatusDelay());
     }
 
-    _getStatusDelay() {
+    _getStatusDelay () {
         return (this.options.emitter && this.options.emitter.statusInterval) || DEFAULT_STATUS_INTERVAL;
-    }
-
-    _log(info) {
-        if (!this.options.slowPool.log) {
-            return;
-        }
-
-        info = Object.assign({ name: this.options.name }, info)
-        this.logger.error(JSON.stringify(info));
     }
 };
 
@@ -139,21 +140,23 @@ function makePool (redisPool, database) {
                     no_ready_check: redisPool.options.noReadyCheck
                 });
 
-                client.on('error', function (err) {
-                    redisPool._log({ db: database, action: 'error', err: err.message });
-
-                    if (!settled) {
-                        settled = true;
-                        client.end(FLUSH_CONNECTION);
-
-                        if (err) {
-                            return resolve(err);
-                        }
-                        return resolve(client);
+                client.on('error', (err) => {
+                    if (settled) {
+                        err.name = redisPool.options.name;
+                        return redisPool.logger.error(err);
                     }
+
+                    settled = true;
+                    client.end(FLUSH_CONNECTION);
+
+                    if (err) {
+                        return resolve(err);
+                    }
+
+                    return resolve(client);
                 });
 
-                client.on('ready', function () {
+                client.on('ready', () => {
                     client.select(database, err => {
                         if (!settled) {
                             settled = true;
@@ -161,6 +164,7 @@ function makePool (redisPool, database) {
                             if (err) {
                                 return resolve(err);
                             }
+
                             return resolve(client);
                         }
                     });
