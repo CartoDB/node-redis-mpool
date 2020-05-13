@@ -1,4 +1,4 @@
-# 0.8.0 (2020-mm-dd)
+# 0.8.0 (2020-05-13)
 
 ### Breaking changes
  - Drop support for Node.js < 12
