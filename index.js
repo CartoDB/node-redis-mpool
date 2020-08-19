@@ -97,6 +97,15 @@ module.exports = class RedisPool extends EventEmitter {
         }
     }
 
+    /**
+     * Closing all connection pools
+     * 
+     * https://github.com/coopernurse/node-pool/blob/v3.7.1/README.md#draining
+     */
+    async drain () {
+        await Promise.all(Object.values(this.pools).map(p => p.drain().then(() => p.clear())) )
+    }
+
     _addCommands () {
         if (this.options.commands.length) {
             this.options.commands.forEach(newCommand => redis.add_command(newCommand));
