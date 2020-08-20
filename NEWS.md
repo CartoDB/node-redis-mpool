@@ -1,3 +1,8 @@
+# 0.8.1 (2020-08-20)
+
+### Added
+ - New `destroy` method in order to drain all pools and clear internal interval
+
 # 0.8.0 (2020-05-13)
 
 ### Breaking changes

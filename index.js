@@ -99,11 +99,10 @@ module.exports = class RedisPool extends EventEmitter {
 
     /**
      * Closing all connection pools
-     *
      */
     async destroy () {
         clearInterval(this._statusInterval)
-        
+
         // https://github.com/coopernurse/node-pool/blob/v3.7.1/README.md#draining
         return await Promise.all(Object.values(this.pools).map(p => p.drain().then(() => p.clear())) )
     }
