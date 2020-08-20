@@ -43,15 +43,15 @@ module.exports = class RedisPool extends EventEmitter {
         this.logger = logger;
 
         this._addCommands();
-        this._emitStatus();
+        this._statusInterval = this._emitStatus();
     }
 
     /**
-   * Acquire Redis client
-   *
-   * @param {String|Number} database redis database name
-   * @returns {Promise} with the Redis client
-   */
+     * Acquire Redis client
+     *
+     * @param {String|Number} database redis database name
+     * @returns {Promise} with the Redis client
+     */
     async acquire (database) {
         let pool = this.pools[database];
         if (!pool) {
@@ -80,11 +80,11 @@ module.exports = class RedisPool extends EventEmitter {
     }
 
     /**
-   * Release resource.
-   *
-   * @param {String|Number} database redis database name
-   * @param {Object} resource resource object to release
-   */
+     * Release resource.
+     *
+     * @param {String|Number} database redis database name
+     * @param {Object} resource resource object to release
+     */
     async release (database, resource) {
         if (this.options.unwatchOnRelease) {
             resource.UNWATCH();
@@ -97,6 +97,16 @@ module.exports = class RedisPool extends EventEmitter {
         }
     }
 
+    /**
+     * Closing all connection pools
+     */
+    async destroy () {
+        clearInterval(this._statusInterval)
+
+        // https://github.com/coopernurse/node-pool/blob/v3.7.1/README.md#draining
+        return await Promise.all(Object.values(this.pools).map(p => p.drain().then(() => p.clear())) )
+    }
+
     _addCommands () {
         if (this.options.commands.length) {
             this.options.commands.forEach(newCommand => redis.add_command(newCommand));
@@ -104,7 +114,7 @@ module.exports = class RedisPool extends EventEmitter {
     }
 
     _emitStatus () {
-        setInterval(() => {
+        return setInterval(() => {
             for (const [poolKey, pool] of Object.entries(this.pools)) {
                 this.emit('status', {
                     name: this.options.name,
