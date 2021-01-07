@@ -7,15 +7,23 @@ const { createPool } = require('generic-pool');
 const FLUSH_CONNECTION = true;
 const DEFAULT_STATUS_INTERVAL = 60000
 const DEFAULTS = {
+    name: 'default',
     host: '127.0.0.1',
     port: '6379',
-    max: 50,
+    max: 8,
+    min: 1,
+    maxWaitingClients: 8,
+    testOnBorrow: false,
+    acquireTimeoutMillis: 3000,
+    fifo: true,
+    priorityRange: 1,
+    autostart: true,
+    evictionRunIntervalMillis: 60000,
+    numTestsPerEvictionRun: 8,
     idleTimeoutMillis: 10000,
-    reapIntervalMillis: 1000,
+    softIdleTimeoutMillis: -1,
     noReadyCheck: false,
-    returnToHead: false,
     unwatchOnRelease: true,
-    name: 'default',
     slowPool: {
         log: false,
         elapsedThreshold: 25
@@ -203,9 +211,17 @@ function makePool (redisPool, database) {
 
     const config = {
         max: redisPool.options.max,
+        min: redisPool.options.min,
+        maxWaitingClients: redisPool.options.maxWaitingClients,
+        testOnBorrow: redisPool.options.testOnBorrow,
+        acquireTimeoutMillis: redisPool.options.acquireTimeoutMillis,
+        fifo: redisPool.options.fifo,
+        priorityRange: redisPool.options.priorityRange,
+        autostart: redisPool.options.autostart,
+        evictionRunIntervalMillis: redisPool.options.evictionRunIntervalMillis,
+        numTestsPerEvictionRun: redisPool.options.numTestsPerEvictionRun,
         idleTimeoutMillis: redisPool.options.idleTimeoutMillis,
-        reapIntervalMillis: redisPool.options.reapIntervalMillis,
-        returnToHead: redisPool.options.returnToHead
+        softIdleTimeoutMillis: redisPool.options.softIdleTimeoutMillis
     };
 
     return createPool(factory, config);
